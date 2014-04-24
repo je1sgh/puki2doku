@@ -64,7 +64,7 @@ my $verbose;
 my $use_font_color_plugin;
 my $use_font_size_plugin;
 my $use_indexmenu_plugin;
-my $dst_dir = "./pages"; # "-s"オプションが省略された場合に備えて
+my $dst_dir = "./pages"; # "-d"オプションが省略された場合に備えて
 my $decode_mode;
 my $attach_file_mode;
 my $src_dir = ".";
@@ -73,6 +73,7 @@ my $dont_overwrite;
 my $specified_page_file;
 my $input_encoding = "euc-jp";
 my $use_heading;
+my $comment_convert=1; # 0: don't care, 1: remove, 2: conver to /* */
 
 my %smiles = (
   smile    => ' :-) ',
@@ -98,6 +99,7 @@ GetOptions("verbose|v"     => \$verbose,
            "do-not-overwrite|O" => \$dont_overwrite,
            "encoding|E=s"  => \$input_encoding,
            "use-heading|H"  => \$use_heading,
+           "comment-convert|c"  => \$comment_conver,
 ) || usage();
 
 sub usage {
@@ -112,6 +114,7 @@ sub usage {
     print "       [--use-heading/-H]\n";
     print "       [--page=pagename.txt/-P pagename.txt]\n";
     print "       [--encoding=utf8/-E utf8]\n";
+    print "       [--comment-convert|-c 2]\n";
     exit 1;
 }
 
@@ -246,7 +249,17 @@ sub convert_file {
 
         # ----
         # #contents
-        if ($line eq "----" && scalar(@sp_buf) == 0) {
+        if ( $comment_convert ) {
+            if ($line =~ "^//") {
+                if ( $comment_conver == 2 ) {
+                    $line =~ s"^//"/*";
+                    $line = $line . " */";
+                    push @sp_buf, $line;
+                }
+                next;
+            }
+        }
+        elsif ($line eq "----" && scalar(@sp_buf) == 0) {
             push @sp_buf, $line;
             next;
         }
@@ -400,8 +413,9 @@ sub convert_file {
     }
     $w->close;
 
-    # copy last modified
-    system("/bin/touch", "-r", $src_file, $doku_file);
+    # copy last modified.
+    # "touch" may locate in either /bin or /usr/bin depending on system.
+    system("touch", "-r", $src_file, $doku_file);
 }
 
 sub heading {
