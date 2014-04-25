@@ -13,6 +13,7 @@
 #                     [-H/--use-heading]
 #                     [-P pagename.txt(encoded)/--page=pagename.txt(encoded)]
 #                     [-E utf8/--encoding=utf8]
+#                     [-c 2/--comment-convert=2]
 #
 #*****************************************************************************
 use strict;
